@@ -1,7 +1,9 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 
+
 def index(request):
-    return HttpResponse("我们的第一个网页")
+    line1 = "<h1 style="text-align:center">术士之战</h1> "
+    return HttpResponse(line1)
 
 # Create your views here.
