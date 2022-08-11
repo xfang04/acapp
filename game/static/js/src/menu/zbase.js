@@ -40,4 +40,11 @@ class AcGameMenu {
             console.log("click settings");
         });
     }
+
+    show(){
+        this.$menu.show();
+    }
+    hide(){
+        this.$menu.hide();
+    }
 }
