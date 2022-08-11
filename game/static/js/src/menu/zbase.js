@@ -32,12 +32,12 @@ class AcGameMenu {
         let outer = this;
         this.$single_mode.click(function (){
             console.log("click single mode");
-        })
+        });
         this.$multi_mode.click(function (){
             console.log("click multi mode");
-        })
+        });
         this.$settings.click(function (){
             console.log("click settings");
-        })
+        });
     }
 }
