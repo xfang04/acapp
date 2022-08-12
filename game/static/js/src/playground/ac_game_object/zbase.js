@@ -15,13 +15,14 @@ class AcGameObject {
 
     }
 
-    on_destory() {  // run before destory
+    on_destroy() {  // run before destory
 
     }
 
-    destory() {
-        this.on_destory();
-        for (let i = 0; i < AC_GAME_OBJECTS.length; i++) {
+    destroy() {  // 删掉该物体
+        this.on_destroy();
+
+        for (let i = 0; i < AC_GAME_OBJECTS.length; i ++ ) {
             if (AC_GAME_OBJECTS[i] === this) {
                 AC_GAME_OBJECTS.splice(i, 1);
                 break;
@@ -29,6 +30,7 @@ class AcGameObject {
         }
     }
 }
+
 
 let last_timestamp;
 let AC_GAME_ANIMATION = function (timestamp) {
