@@ -150,6 +150,10 @@ class Player extends AcGameObject {
     start() {
         if (this.is_me) {
             this.add_listening_events();
+        } else {
+            let tx = Math.random() * this.playground.width;
+            let ty = Math.random() * this.playground.height;
+            this.move_to(tx, ty);
         }
     }
 
@@ -189,23 +193,29 @@ class Player extends AcGameObject {
         new FireBall(this.playground, this, x, y, radius, vx, vy, color, speed, move_length);
     }
 
-    get_dist(x1, x2, y1, y2) { // 求两点之间距离
+    get_dist(x1, y1, x2, y2) {
         let dx = x1 - x2;
         let dy = y1 - y2;
         return Math.sqrt(dx * dx + dy * dy);
     }
 
-    move_to(tx, ty) { // target x target y
+    move_to(tx, ty) {
         this.move_length = this.get_dist(this.x, this.y, tx, ty);
         let angle = Math.atan2(ty - this.y, tx - this.x);
         this.vx = Math.cos(angle);
         this.vy = Math.sin(angle);
     }
 
+
     update() {
         if (this.move_length < this.eps) {
             this.move_length = 0;
             this.vx = this.vy = 0;
+            if (!this.is_me) {
+                let tx = Math.random() * this.playground.width;
+                let ty = Math.random() * this.playground.height;
+                this.move_to(tx, ty);
+            }
         } else {
             let moved = Math.min(this.move_length, this.speed * this.timedelta / 1000);
             this.x += this.vx * moved;
@@ -275,6 +285,9 @@ class FireBall extends AcGameObject {
         this.players = [];
         this.players.push(new Player(this, this.width / 2, this.height / 2, this.height * 0.05, "white", this.height * 0.15, true))
 
+        for (let i = 0; i < 5; i++) {
+            this.players.push(new Player(this, this.width / 2, this.height / 2, this.height * 0.05, "blue", this.height * 0.15, false))
+        }
 
         this.start();
 
