@@ -66,13 +66,14 @@ class AcGameObject {
 
     }
 
-    on_destory() {  // run before destory
+    on_destroy() {  // run before destory
 
     }
 
-    destory() {
-        this.on_destory();
-        for (let i = 0; i < AC_GAME_OBJECTS.length; i++) {
+    destroy() {  // 删掉该物体
+        this.on_destroy();
+
+        for (let i = 0; i < AC_GAME_OBJECTS.length; i ++ ) {
             if (AC_GAME_OBJECTS[i] === this) {
                 AC_GAME_OBJECTS.splice(i, 1);
                 break;
@@ -80,6 +81,7 @@ class AcGameObject {
         }
     }
 }
+
 
 let last_timestamp;
 let AC_GAME_ANIMATION = function (timestamp) {
@@ -121,7 +123,7 @@ requestAnimationFrame(AC_GAME_ANIMATION);class GameMap extends AcGameObject {
     }
 
     render() {
-        this.ctx.fillStyle = "rgba(0,0,0)";
+        this.ctx.fillStyle = "rgba(0,0,0,0.2)";
         this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
     }
 }
@@ -133,19 +135,84 @@ class Player extends AcGameObject {
         this.ctx = this.playground.game_map.ctx;
         this.x = x;
         this.y = y;
+        this.vx = 0;  // 速度
+        this.vy = 0;
+        this.move_length = 0;  // 需要移动的长度
         this.radius = radius;
         this.color = color;
         this.speed = speed;
         this.is_me = is_me;
         this.eps = 0.1;
+        this.cur_skill = null;
 
     }
 
     start() {
+        if (this.is_me) {
+            this.add_listening_events();
+        }
+    }
 
+    add_listening_events() {
+        let outer = this;
+        this.playground.game_map.$canvas.on("contextmenu", function () {
+            return false;
+        });
+        this.playground.game_map.$canvas.mousedown(function (e) {
+            if (e.which === 3) { // 3 代表右键
+                outer.move_to(e.clientX, e.clientY);
+            } else if (e.which === 1) {
+                if (outer.cur_skill === "fireball") {
+                    outer.shoot_fireball(e.clientX, e.clientY);
+                }
+                outer.cur_skill = null;
+            }
+        });
+        $(window).keydown(function (e) {
+            if (e.which === 81) { // q 键
+                outer.cur_skill = "fireball";
+                return false;
+            }
+
+        })
+    }
+
+    shoot_fireball(tx, ty) {
+        console.log("123");
+        let x = this.x, y = this.y;
+        let radius = this.playground.height * 0.01;
+        let angle = Math.atan2(ty - this.y, tx - this.x);
+        let vx = Math.cos(angle), vy = Math.sin(angle);
+        let color = "orange";
+        let speed = this.playground.height * 0.5;
+        let move_length = this.playground.height * 1;
+        new FireBall(this.playground, this, x, y, radius, vx, vy, color, speed, move_length);
+    }
+
+    get_dist(x1, x2, y1, y2) { // 求两点之间距离
+        let dx = x1 - x2;
+        let dy = y1 - y2;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    move_to(tx, ty) { // target x target y
+        this.move_length = this.get_dist(this.x, this.y, tx, ty);
+        let angle = Math.atan2(ty - this.y, tx - this.x);
+        this.vx = Math.cos(angle);
+        this.vy = Math.sin(angle);
     }
 
     update() {
+        if (this.move_length < this.eps) {
+            this.move_length = 0;
+            this.vx = this.vy = 0;
+        } else {
+            let moved = Math.min(this.move_length, this.speed * this.timedelta / 1000);
+            this.x += this.vx * moved;
+            this.y += this.vy * moved;
+            this.move_length -= moved;
+        }
+
         this.rendar();
     }
 
@@ -156,7 +223,46 @@ class Player extends AcGameObject {
         this.ctx.fill();
     }
 }
-class AcGamePlayground{
+class FireBall extends AcGameObject {
+    constructor(playground, player, x, y, radius, vx, vy, color, speed, move_length) {
+        super();
+        this.playground = playground;
+        this.player = player;
+        this.ctx = this.playground.game_map.ctx;
+        this.x = x;
+        this.y = y;
+        this.vx = vx;
+        this.vy = vy;
+        this.radius = radius;
+        this.color = color;
+        this.speed = speed;
+        this.move_length = move_length;
+        this.eps = 0.1;
+    }
+
+    start() {
+
+    }
+
+    update() {
+        if (this.move_length < this.eps) {
+            this.destroy();
+            return false;
+        }
+        let moved = Math.min(this.move_length, this.speed * this.timedelta / 1000);
+        this.x += this.vx * moved;
+        this.y += this.vy * moved;
+        this.move_length -= moved;
+        this.render();
+    }
+
+    render() {
+        this.ctx.beginPath();
+        this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+        this.ctx.fillStyle = this.color;
+        this.ctx.fill();
+    }
+}class AcGamePlayground {
     constructor(root) {
         this.root = root;
         this.$playground = $(`<div class="ac-game-playground">游戏界面</div>`);
@@ -167,22 +273,26 @@ class AcGamePlayground{
         this.height = this.$playground.height();
         this.game_map = new GameMap(this);
         this.players = [];
-        this.players.push(new Player(this,this.width / 2,this.height /2, this.height * 0.05, "white", this.height * 0.15, true))
+        this.players.push(new Player(this, this.width / 2, this.height / 2, this.height * 0.05, "white", this.height * 0.15, true))
 
 
         this.start();
 
     }
-    start(){
+
+    start() {
 
     }
-    update(){
+
+    update() {
 
     }
-    show(){
+
+    show() {
         this.$playground.show();
     }
-    hide(){
+
+    hide() {
         this.$playground.hide();
     }
 }export class AcGame {
